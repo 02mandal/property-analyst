@@ -8,7 +8,7 @@ from typing import Any
 
 from bs4 import BeautifulSoup
 
-from models.property import PropertyRecord
+from models.property import PropertyRecord, generate_property_hash
 from models.watchlist import SearchCriteria
 from scrapers.base import AbstractScraper
 
@@ -134,6 +134,20 @@ class RightmoveScraper(AbstractScraper):
 
         customer = data.get("customer", {})
 
+        address = data.get("address", {}).get("displayAddress")
+        full_postcode = self._extract_postcode(postcode)
+        floor_level = self._extract_floor_level(key_features)
+        bedrooms = data.get("bedrooms")
+        bathrooms = data.get("bathrooms")
+        property_hash = generate_property_hash(
+            address=address,
+            postcode=full_postcode,
+            floor=floor_level,
+            size=size_sqft,
+            bedrooms=bedrooms,
+            bathrooms=bathrooms,
+        )
+
         return PropertyRecord(
             source=self.name,
             source_url=url,
@@ -150,7 +164,7 @@ class RightmoveScraper(AbstractScraper):
             price_reduction_count=data.get("misInfo", {}).get("premiumDisplay", 0),
             latitude=data.get("location", {}).get("latitude"),
             longitude=data.get("location", {}).get("longitude"),
-            postcode=self._extract_postcode(postcode),
+            postcode=full_postcode,
             postcode_outcode=data.get("address", {}).get("outcode"),
             postcode_incode=data.get("address", {}).get("incode"),
             description=data.get("text", {}).get("description"),
@@ -163,6 +177,7 @@ class RightmoveScraper(AbstractScraper):
             listing_update_reason=data.get("listingHistory", {}).get("listingUpdateReason"),
             available_date=data.get("lettings", {}).get("letAvailableDate"),
             scraped_at=datetime.now(),
+            property_hash=property_hash,
             raw_data=data,
         )
 

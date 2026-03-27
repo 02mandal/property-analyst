@@ -184,8 +184,10 @@ def scrape_url(args: argparse.Namespace) -> None:
         db.insert(result)
         print(f"Scraped: {result.display_address}")
         print(f"  Price: £{result.price_pcm / 100 if result.price_pcm else 0:.0f}pcm")
-        print(f"  Bedrooms: {result.bedrooms}")
-        print(f"  Bathrooms: {result.bathrooms}")
+        print(f"  Bedrooms: {result.bedrooms} | Bathrooms: {result.bathrooms}")
+        postcode = f"{result.postcode_outcode} {result.postcode_incode}" if result.postcode_outcode else None
+        print(f"  Size: {result.size_sqft} sq ft | Postcode: {postcode}")
+        print(f"  EPC: {result.epc_rating or 'N/A'} | Council Tax: {result.council_tax_band or 'N/A'}")
         print(f"  Agent: {result.agent_name}")
     else:
         print("Failed to scrape URL")

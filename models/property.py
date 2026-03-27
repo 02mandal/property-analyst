@@ -1,8 +1,46 @@
 """Property record model."""
 
+import hashlib
 from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any
+
+
+def generate_property_hash(
+    address: str | None,
+    postcode: str | None,
+    floor: str | None,
+    size: int | None,
+    bedrooms: int | None,
+    bathrooms: int | None,
+) -> str | None:
+    """Generate a hash for cross-source property matching.
+
+    Uses property characteristics that don't change across sources.
+    Excludes price (changes over time) and lat/lng (may vary between sources).
+    """
+    if not address and not postcode:
+        return None
+
+    key_parts = []
+    if address:
+        key_parts.append(address.strip().lower())
+    if postcode:
+        key_parts.append(postcode.strip().upper())
+    if floor:
+        key_parts.append(f"f:{floor.strip().lower()}")
+    if size:
+        key_parts.append(f"s:{size}")
+    if bedrooms is not None:
+        key_parts.append(f"b:{bedrooms}")
+    if bathrooms is not None:
+        key_parts.append(f"ba:{bathrooms}")
+
+    if not key_parts:
+        return None
+
+    key = "|".join(key_parts)
+    return hashlib.sha256(key.encode()).hexdigest()[:16]
 
 
 @dataclass
@@ -47,6 +85,8 @@ class PropertyRecord:
     first_seen_at: datetime | None = None
     updated_at: datetime | None = None
 
+    property_hash: str | None = None
+
     raw_data: dict[str, Any] | None = None
     status: str = "active"
 
@@ -88,6 +128,7 @@ class PropertyRecord:
             "scraped_at": self.scraped_at.isoformat() if self.scraped_at else None,
             "first_seen_at": self.first_seen_at.isoformat() if self.first_seen_at else None,
             "updated_at": self.updated_at.isoformat() if self.updated_at else None,
+            "property_hash": self.property_hash,
             "raw_data": self.raw_data,
         }
 
@@ -137,5 +178,6 @@ class PropertyRecord:
             scraped_at=scraped_at or datetime.now(),
             first_seen_at=first_seen_at,
             updated_at=updated_at,
+            property_hash=data.get("property_hash"),
             raw_data=data.get("raw_data"),
         )

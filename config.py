@@ -1,6 +1,6 @@
 """Configuration for property scraper."""
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 
 
@@ -32,9 +32,9 @@ class DatabaseConfig:
 @dataclass
 class Config:
     """Main application configuration."""
-    database: DatabaseConfig = DatabaseConfig()
-    retry: RetryConfig = RetryConfig()
-    rate_limit: RateLimitConfig = RateLimitConfig()
+    database: DatabaseConfig = field(default_factory=DatabaseConfig)
+    retry: RetryConfig = field(default_factory=RetryConfig)
+    rate_limit: RateLimitConfig = field(default_factory=RateLimitConfig)
 
     user_agent: str = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36"
 

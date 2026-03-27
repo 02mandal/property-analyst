@@ -42,6 +42,7 @@ CREATE TABLE IF NOT EXISTS properties (
     scraped_at TEXT NOT NULL,
     first_seen_at TEXT,
     updated_at TEXT,
+    property_hash TEXT,
     
     raw_data TEXT
 );
@@ -54,6 +55,7 @@ CREATE INDEX IF NOT EXISTS idx_properties_price_pcm ON properties(price_pcm);
 CREATE INDEX IF NOT EXISTS idx_properties_scraped_at ON properties(scraped_at);
 CREATE INDEX IF NOT EXISTS idx_properties_first_seen ON properties(first_seen_at);
 CREATE INDEX IF NOT EXISTS idx_properties_status ON properties(status);
+CREATE INDEX IF NOT EXISTS idx_properties_hash ON properties(property_hash);
 
 -- Watchlist table
 CREATE TABLE IF NOT EXISTS watchlist (
