@@ -92,7 +92,11 @@ class PropertyRecord:
 
     @property
     def id(self) -> str:
-        return self.source_url.split("/")[-1].split("#")[0]
+        import re
+        match = re.search(r"/properties/(\d+)", self.source_url)
+        if match:
+            return match.group(1)
+        return ""
 
     def to_dict(self) -> dict[str, Any]:
         return {
