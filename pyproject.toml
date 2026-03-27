@@ -20,6 +20,8 @@ lxml = "^4.9"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^7.0"
+ruff = "^0.9"
+pyright = "^1.1"
 
 [build-system]
 requires = ["poetry-core"]
@@ -27,3 +29,26 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry.scripts]
 property-scraper = "cli.main:main"
+
+[tool.ruff]
+line-length = 100
+
+[tool.ruff.lint]
+select = [
+    "E",      # pycodestyle errors
+    "W",      # pycodestyle warnings
+    "F",      # Pyflakes
+    "I",      # isort
+    "B",      # flake8-bugbear
+    "C4",     # flake8-comprehensions
+    "UP",     # pyupgrade
+]
+ignore = [
+    "E501",   # line too long (handled by formatter)
+]
+
+[tool.pyright]
+include = ["models", "scrapers", "services", "storage", "cli", "config.py"]
+exclude = ["**/__pycache__"]
+typeCheckingMode = "basic"
+reportMissingTypeStubs = false
