@@ -1,0 +1,29 @@
+[tool.poetry]
+name = "property-analyst"
+version = "0.1.0"
+description = "Property scraper for rental listings"
+authors = ["Arya Mandal <arya@example.com>"]
+readme = "README.md"
+packages = [
+    {include = "models"},
+    {include = "scrapers"},
+    {include = "services"},
+    {include = "storage"},
+    {include = "cli"},
+]
+
+[tool.poetry.dependencies]
+python = "^3.10"
+requests = "^2.28"
+beautifulsoup4 = "^4.11"
+lxml = "^4.9"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^7.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry.scripts]
+property-scraper = "cli.main:main"
