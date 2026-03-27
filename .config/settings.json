@@ -1,0 +1,10 @@
+{
+  "ruff": {
+    "lineLength": 100
+  },
+  "pyright": {
+    "include": ["models", "scrapers", "services", "storage", "cli", "config.py"],
+    "exclude": ["**/__pycache__"],
+    "typeCheckingMode": "basic"
+  }
+}
