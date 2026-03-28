@@ -119,6 +119,30 @@ class PropertyDatabase:
         """Get property by ID."""
         return self[id]
 
+    def get_by_hash(self, hash: str) -> PropertyRecord | None:
+        """Get first property matching the given hash."""
+        if not hash:
+            return None
+        cursor = self.conn.execute(
+            "SELECT * FROM properties WHERE property_hash = ? LIMIT 1",
+            (hash,),
+        )
+        row = cursor.fetchone()
+        if row is None:
+            return None
+        return self._row_to_property(row)
+
+    def merge(self, record: PropertyRecord) -> bool:
+        """Insert record if not duplicate. Returns True if inserted."""
+        if not record.property_hash:
+            self.insert(record)
+            return True
+        existing = self.get_by_hash(record.property_hash)
+        if existing and record == existing:
+            return False
+        self.insert(record)
+        return True
+
     def query(self, sql: str, params: tuple = ()) -> list[PropertyRecord]:
         """Execute raw SQL query and return PropertyRecords."""
         cursor = self.conn.execute(sql, params)

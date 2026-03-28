@@ -181,8 +181,11 @@ def scrape_url(args: argparse.Namespace) -> None:
     result = scraper(args.url)
 
     if result and not isinstance(result, list):
-        db.insert(result)
-        print(f"Scraped: {result.display_address}")
+        is_new = db.merge(result)
+        if is_new:
+            print(f"Scraped: {result.display_address}")
+        else:
+            print(f"Duplicate: {result.display_address}")
         print(f"  Price: £{result.price_pcm / 100 if result.price_pcm else 0:.0f}pcm")
         print(f"  Bedrooms: {result.bedrooms} | Bathrooms: {result.bathrooms}")
         postcode = f"{result.postcode_outcode} {result.postcode_incode}" if result.postcode_outcode else None

@@ -98,6 +98,17 @@ class PropertyRecord:
             return match.group(1)
         return ""
 
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, PropertyRecord):
+            return NotImplemented
+        return (
+            self.property_hash == other.property_hash
+            and self.price_pcm == other.price_pcm
+        )
+
+    def __hash__(self) -> int:
+        return hash((self.property_hash, self.price_pcm))
+
     def to_dict(self) -> dict[str, Any]:
         return {
             "id": self.id,
