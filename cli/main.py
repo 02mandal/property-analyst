@@ -5,6 +5,8 @@ import logging
 import sys
 from datetime import datetime
 
+import polars as pl
+
 from models.watchlist import SearchCriteria, WatchlistEntry
 from scrapers import RightmoveScraper, ScraperRegistry
 from storage import PropertyDatabase
@@ -164,10 +166,26 @@ def query_properties(args: argparse.Namespace) -> None:
 
     records = results.all()
 
-    print(f"Found {len(records)} properties:")
-    for r in records:
-        price_str = f"£{r.price_pcm / 100:.0f}pcm" if r.price_pcm else "N/A"
-        print(f"  [{r.id}] {r.display_address} - {price_str} - {r.bedrooms}bed")
+    if not records:
+        print("No properties found")
+        db.close()
+        return
+
+    df = pl.DataFrame({
+        "id": [r.id for r in records],
+        "address": [r.display_address for r in records],
+        "price_pcm": [f"£{r.price_pcm/100:.0f}pcm" if r.price_pcm else "N/A" for r in records],
+        "beds": [r.bedrooms for r in records],
+        "baths": [r.bathrooms for r in records],
+        "sqft": [r.size_sqft for r in records],
+        "postcode": [f"{r.postcode_outcode} {r.postcode_incode}" if r.postcode_outcode else None for r in records],
+        "furnished": [r.furnished for r in records],
+        "epc": [r.epc_rating for r in records],
+        "hash": [r.property_hash for r in records],
+    })
+
+    print(f"\nFound {len(records)} properties:\n")
+    print(df)
 
     db.close()
 
