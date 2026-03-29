@@ -1,8 +1,0 @@
-{
-  "include": ["**/*.py"],
-  "exclude": ["__pycache__", ".git", ".venv", "venv"],
-  "venvPath": ".",
-  "venv": ".venv",
-  "typeCheckingMode": "strict",
-  "reportMissingTypeStubs": false
-}
