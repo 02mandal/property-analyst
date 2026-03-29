@@ -9,7 +9,6 @@
 
 ## Pre-commit
 - Hooks run ruff + pyright automatically
-- Bypass: `git commit --no-verify`
 
 ## Skills
 - **conventional-commits**: Commit message format
