@@ -204,6 +204,34 @@ class AbstractScraper(ABC):
 
         yield from self.scrape_many(unique_urls, progress)
 
+    def stream_from_api(
+        self,
+        criteria: Any,
+        progress: Callable[[int, int], None] | None = None,
+    ) -> Generator[ScrapeResult, None, None]:
+        """Scrape listings using API-based discovery."""
+        listing_urls: list[str] = []
+
+        if hasattr(self, "stream_from_api") and callable(getattr(self, "stream_from_api", None)):
+            listing_urls = self.stream_from_api(criteria, progress=progress)
+        else:
+            listing_urls = self.search_urls(criteria)
+            if hasattr(self, "listings_from_api"):
+                page = 0
+                while True:
+                    page_urls = self.listings_from_api(criteria, page)
+                    if not page_urls:
+                        break
+                    listing_urls.extend(page_urls)
+                    page += 1
+
+        unique_urls = list(dict.fromkeys(listing_urls))
+
+        if progress:
+            progress(0, len(unique_urls))
+
+        yield from self.scrape_many(unique_urls, progress)
+
     def __call__(
         self,
         url_or_urls: str | list[str],
