@@ -1,23 +1,16 @@
-# Development Workflow
+# Project Conventions
 
-## Pre-commit Hooks
+## Commands
+- Use `poetry run` for all commands
 
-Checks run automatically on commit:
+## Testing
+- Tests live in `tests/` directory
+- Use `/skill testing` for test conventions
 
-```bash
-poetry run ruff check .
-poetry run pyright
-```
-
-To bypass hooks temporarily: `git commit --no-verify`
+## Pre-commit
+- Hooks run ruff + pyright automatically
+- Bypass: `git commit --no-verify`
 
 ## Skills
-
-Load specialized knowledge with the `/skill` command:
-
-- **conventional-commits**: Commit message format and conventions
-- **testing**: Test structure, fixtures, and mocking patterns
-
-## Adding New Tests
-
-See the `testing` skill for detailed guidance on test conventions and patterns.
+- **conventional-commits**: Commit message format
+- **testing**: Test structure and patterns
