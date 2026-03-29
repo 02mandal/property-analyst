@@ -67,7 +67,10 @@ class RightmoveScraper(AbstractScraper):
 
     def search_urls(self, criteria: SearchCriteria) -> list[str]:
         """Generate Rightmove search URLs from criteria."""
-        url = f"{self.base_url}/property-to-rent/"
+        if criteria.listing_type == "buy":
+            url = f"{self.base_url}/property-for-sale/"
+        else:
+            url = f"{self.base_url}/property-to-rent/"
 
         location = criteria.location.replace(" ", "+")
         url += f"{location}.html"
@@ -137,9 +140,11 @@ class RightmoveScraper(AbstractScraper):
         return list(dict.fromkeys(urls))
 
     def search_api_url(self, criteria: SearchCriteria, page: int = 0) -> str:
-        """Build Rightmove internal API URL for rental search."""
+        """Build Rightmove internal API URL for search."""
         params = RightmoveAPI.build_search_params(criteria, page)
         query = "&".join(f"{k}={v}" for k, v in params.items())
+        if criteria.listing_type == "buy":
+            return f"{self.api_base_url}/property-sale-api/search?{query}"
         return f"{self.api_base_url}/property-rental-api/search?{query}"
 
     def listings_from_api(self, criteria: SearchCriteria, page: int = 0) -> list[str]:
@@ -180,9 +185,16 @@ class RightmoveScraper(AbstractScraper):
 
         return list(dict.fromkeys(all_ids))
 
+    def _get_listing_type(self, url: str) -> str:
+        """Extract listing type from URL."""
+        if "/property-for-sale/" in url:
+            return "buy"
+        return "rent"
+
     def parse_listing(self, url: str, html: str) -> PropertyRecord:
         """Parse a Rightmove listing page HTML into a PropertyRecord."""
         data = self._extract_property_data(html)
+        listing_type = self._get_listing_type(url)
 
         images = []
         for img in data.get("images", []):
@@ -267,6 +279,7 @@ class RightmoveScraper(AbstractScraper):
             scraped_at=datetime.now(),
             property_hash=property_hash,
             raw_data=data,
+            listing_type=listing_type,
         )
 
     def _extract_property_data(self, html: str) -> dict[str, Any]:

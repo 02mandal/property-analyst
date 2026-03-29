@@ -11,6 +11,7 @@ class SearchCriteria:
     """Search criteria for a watchlist entry."""
     location: str
     radius_miles: float = 0.5
+    listing_type: str = "rent"
 
     min_bedrooms: int | None = None
     max_bedrooms: int | None = None
@@ -30,6 +31,7 @@ class SearchCriteria:
         return {
             "location": self.location,
             "radius_miles": self.radius_miles,
+            "listing_type": self.listing_type,
             "min_bedrooms": self.min_bedrooms,
             "max_bedrooms": self.max_bedrooms,
             "property_types": self.property_types,
@@ -47,6 +49,7 @@ class SearchCriteria:
         return cls(
             location=data.get("location", ""),
             radius_miles=data.get("radius_miles", 0.5),
+            listing_type=data.get("listing_type", "rent"),
             min_bedrooms=data.get("min_bedrooms"),
             max_bedrooms=data.get("max_bedrooms"),
             property_types=data.get("property_types"),
