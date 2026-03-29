@@ -17,9 +17,3 @@
 - Pre-commit hooks run ruff + pyright
 - CI runs on GitHub Actions
 
-## Global Config
-
-Personal workflow stored in `~/.config/`:
-- `INSTRUCTIONS.md` - Development workflow
-- `skills/github-api.md` - GitHub API patterns
-- `hooks/` - Pre-push and pre-commit hooks
