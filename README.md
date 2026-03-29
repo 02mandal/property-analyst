@@ -1,160 +1,51 @@
-# Property Analyst
-
-A lightweight property scraper for rental listings from Rightmove (and extensible for other sources).
-
-## Features
-
-- Scrape individual property listings from Rightmove
-- Manage watchlists with search criteria
-- Store properties in SQLite with DuckDB-ready schema
-- Rate limiting and exponential backoff to avoid detection
-- Extensible architecture for adding new sources
-
-## Installation
-
-```bash
-# Install dependencies
-poetry install
-
-# Or with pip
-pip install requests beautifulsoup4 lxml
-```
+# Personal Development Configuration
 
 ## Quick Start
 
-### Initialize database
+1. Install Python 3.10+
+2. Clone your repo
+3. Run: `python3 ~/.config/bootstrap.py`
+4. Set GitHub token: `export GITHUB_TOKEN=ghp_your_token`
 
-```bash
-poetry run python -m cli.main init
-```
+## What This Does
 
-### Scrape a single property
+- **Pre-push hook**: Blocks direct pushes to `main`/`master`
+- **Pre-commit hook**: Runs `ruff` and `pyright` checks
+- **Repo template**: Copies standard files (AGENTS.md, CI, pyright config)
 
-```bash
-poetry run python -m cli.main scrape "https://www.rightmove.co.uk/properties/173794763"
-```
-
-### Add a watchlist
-
-```bash
-poetry run python -m cli.main watchlist-add \
-  --name "SE16 flats" \
-  --location "SE16" \
-  --max-bedrooms 2 \
-  --max-price 300000
-```
-
-### List watchlists
-
-```bash
-poetry run python -m cli.main watchlist-list
-```
-
-### Query properties
-
-```bash
-# All properties
-poetry run python -m cli.main query
-
-# Filter by bedrooms
-poetry run python -m cli.main query --bedrooms 2
-
-# Filter by price
-poetry run python -m cli.main query --max-price 300000
-
-# Combine filters
-poetry run python -m cli.main query --source rightmove --bedrooms 2 --max-price 350000
-```
-
-### Run all watchlist scrapes
-
-```bash
-poetry run python -m cli.main run
-```
-
-### Search and scrape properties
-
-```bash
-poetry run python -m cli.main search \
-  --location "SE16" \
-  --max-bedrooms 2 \
-  --max-price 3000 \
-  --furnished furnished
-```
-
-This uses Rightmove's API to discover properties matching your criteria and scrapes full details into the database.
-
-## Architecture
+## Directory Structure
 
 ```
-property-analyst/
-├── models/           # Data models (PropertyRecord, WatchlistEntry)
-├── scrapers/         # Source scrapers (Rightmove, extensible)
-│   ├── base.py      # AbstractScraper, RateLimiter
-│   ├── rightmove.py
-│   └── registry.py
-├── storage/          # Database layer (SQLite + DuckDB ready)
-├── services/        # Utilities (geocoding for walk times)
-├── cli/             # CLI entry point
-└── config.py        # Configuration
+~/.config/
+├── README.md           # This file
+├── INSTRUCTIONS.md     # Detailed workflow documentation
+├── bootstrap.py        # Setup script
+├── hooks/
+│   ├── pre-push        # Blocks main/master pushes
+│   └── pre-commit      # Runs ruff + pyright
+├── opencode/
+│   ├── opencode.json   # OpenCode permissions
+│   └── INSTRUCTIONS.md # OpenCode-specific workflow
+└── repo-template/      # Files to copy into new repos
+    ├── AGENTS.md
+    ├── pyrightconfig.json
+    └── .github/workflows/ci.yml
 ```
 
-## Database Schema
+## Bootstrap Commands
 
-Properties are stored with:
+| Command | Description |
+|---------|-------------|
+| `python3 ~/.config/bootstrap.py` | Auto-detect setup |
+| `python3 ~/.config/bootstrap.py --hooks` | Install hooks only |
+| `python3 ~/.config/bootstrap.py --template` | Copy template only |
+| `python3 ~/.config/bootstrap.py --reset` | Reset to defaults (overwrites) |
 
-- Address, postcode, location (lat/lng)
-- Bedrooms, bathrooms, size, property type
-- Price (in pence for accuracy)
-- EPC rating, council tax band
-- Agent information
-- Listing history (price reductions, updates)
-- Raw data for debugging
+## Environment Variables
 
-## Scheduling
+- `GITHUB_TOKEN`: GitHub Personal Access Token (required for branch protection)
+- Add to `~/.zshrc` or `~/.bashrc`: `export GITHUB_TOKEN=ghp_your_token`
 
-Run via cron for periodic updates:
+## Detailed Workflow
 
-```bash
-# Every 4 hours
-0 */4 * * * cd /path/to/property-analyst && poetry run python -m cli.main run
-```
-
-## Extending
-
-Add a new source by subclassing `AbstractScraper`:
-
-```python
-from scrapers.base import AbstractScraper
-from models.property import PropertyRecord
-
-class MyScraper(AbstractScraper):
-    name = "mysource"
-    
-    def search_urls(self, criteria):
-        # Return search URLs from criteria
-        return [...]
-    
-    def listings_from_search(self, html):
-        # Extract listing URLs from search page
-        return [...]
-    
-    def parse_listing(self, url, html):
-        # Parse HTML into PropertyRecord
-        return PropertyRecord(...)
-    
-    def search_api_url(self, criteria, page=0):
-        # For API-based search (optional)
-        return f"https://api.example.com/search?..."
-    
-    def listings_from_api(self, criteria, page=0):
-        # Fetch listings from API (optional)
-        return [...]
-```
-
-Register in `ScraperRegistry`:
-
-```python
-from scrapers.registry import ScraperRegistry
-ScraperRegistry.register("mysource", MyScraper)
-```
+See [INSTRUCTIONS.md](INSTRUCTIONS.md) for the complete development workflow.
