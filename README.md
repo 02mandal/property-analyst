@@ -57,3 +57,4 @@ poetry run python -m cli.main query --bedrooms 2 --max-price 350000
 ## Extending
 
 Subclass `AbstractScraper` in `scrapers/base.py`. See `scrapers/rightmove.py` for an example.
+# Workflow Test
