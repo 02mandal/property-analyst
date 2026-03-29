@@ -1,0 +1,7 @@
+{
+  "$schema": "https://microsoft.github.io/pyright/schemas/pyrightconfig.schema.json",
+  "include": ["models", "scrapers", "services", "storage", "cli", "config.py"],
+  "exclude": ["**/__pycache__", "tests"],
+  "typeCheckingMode": "basic",
+  "reportMissingTypeStubs": false
+}
