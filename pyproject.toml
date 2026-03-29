@@ -21,6 +21,8 @@ polars = "^1.0"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^7.0"
+pytest-mock = "^3.14"
+pytest-cov = "^4.1"
 ruff = "^0.9"
 pyright = "^1.1"
 
@@ -47,9 +49,3 @@ select = [
 ignore = [
     "E501",   # line too long (handled by formatter)
 ]
-
-[tool.pyright]
-include = ["models", "scrapers", "services", "storage", "cli", "config.py"]
-exclude = ["**/__pycache__"]
-typeCheckingMode = "basic"
-reportMissingTypeStubs = false
