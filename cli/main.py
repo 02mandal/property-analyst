@@ -175,16 +175,27 @@ def query_properties(args: argparse.Namespace) -> None:
         "id": [r.id for r in records],
         "address": [r.display_address for r in records],
         "price_pcm": [f"£{r.price_pcm/100:.0f}pcm" if r.price_pcm else "N/A" for r in records],
+        "price_pw": [f"£{r.price_pw/100:.0f}pw" if r.price_pw else "N/A" for r in records],
         "beds": [r.bedrooms for r in records],
         "baths": [r.bathrooms for r in records],
         "sqft": [r.size_sqft for r in records],
-        "postcode": [f"{r.postcode_outcode} {r.postcode_incode}" if r.postcode_outcode else None for r in records],
+        "floor": [r.floor_level for r in records],
+        "type": [r.property_type for r in records],
         "furnished": [r.furnished for r in records],
+        "postcode": [f"{r.postcode_outcode} {r.postcode_incode}" if r.postcode_outcode else None for r in records],
+        "lat": [r.latitude for r in records],
+        "lng": [r.longitude for r in records],
         "epc": [r.epc_rating for r in records],
+        "council_tax": [r.council_tax_band for r in records],
+        "agent": [r.agent_name for r in records],
+        "available": [r.available_date for r in records],
         "hash": [r.property_hash for r in records],
+        "status": [r.status for r in records],
+        "scraped": [r.scraped_at for r in records],
     })
 
     print(f"\nFound {len(records)} properties:\n")
+    pl.Config.set_tbl_cols(len(df.columns))
     print(df)
 
     db.close()
