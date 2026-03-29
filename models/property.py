@@ -89,6 +89,7 @@ class PropertyRecord:
 
     raw_data: dict[str, Any] | None = None
     status: str = "active"
+    listing_type: str = "rent"
 
     @property
     def id(self) -> str:
@@ -145,6 +146,7 @@ class PropertyRecord:
             "updated_at": self.updated_at.isoformat() if self.updated_at else None,
             "property_hash": self.property_hash,
             "raw_data": self.raw_data,
+            "listing_type": self.listing_type,
         }
 
     @classmethod
@@ -195,4 +197,5 @@ class PropertyRecord:
             updated_at=updated_at,
             property_hash=data.get("property_hash"),
             raw_data=data.get("raw_data"),
+            listing_type=data.get("listing_type", "rent"),
         )

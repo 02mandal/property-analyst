@@ -44,7 +44,8 @@ CREATE TABLE IF NOT EXISTS properties (
     updated_at TEXT,
     property_hash TEXT,
     
-    raw_data TEXT
+    raw_data TEXT,
+    listing_type TEXT DEFAULT 'rent'
 );
 
 CREATE INDEX IF NOT EXISTS idx_properties_source ON properties(source);
@@ -56,6 +57,7 @@ CREATE INDEX IF NOT EXISTS idx_properties_scraped_at ON properties(scraped_at);
 CREATE INDEX IF NOT EXISTS idx_properties_first_seen ON properties(first_seen_at);
 CREATE INDEX IF NOT EXISTS idx_properties_status ON properties(status);
 CREATE INDEX IF NOT EXISTS idx_properties_hash ON properties(property_hash);
+CREATE INDEX IF NOT EXISTS idx_properties_listing_type ON properties(listing_type);
 
 -- Watchlist table
 CREATE TABLE IF NOT EXISTS watchlist (

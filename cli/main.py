@@ -84,6 +84,7 @@ def add_watchlist(args: argparse.Namespace) -> None:
     criteria = SearchCriteria(
         location=args.location,
         radius_miles=args.radius,
+        listing_type=args.listing_type,
         min_bedrooms=args.min_bedrooms,
         max_bedrooms=args.max_bedrooms,
         property_types=args.property_type,
@@ -143,6 +144,8 @@ def query_properties(args: argparse.Namespace) -> None:
 
     filters = {}
 
+    if args.listing_type:
+        filters["listing_type"] = args.listing_type
     if args.source:
         filters["source"] = args.source
     if args.bedrooms:
@@ -173,6 +176,7 @@ def query_properties(args: argparse.Namespace) -> None:
 
     df = pl.DataFrame({
         "id": [r.id for r in records],
+        "type": [r.listing_type for r in records],
         "address": [r.display_address for r in records],
         "price_pcm": [f"£{r.price_pcm/100:.0f}pcm" if r.price_pcm else "N/A" for r in records],
         "price_pw": [f"£{r.price_pw/100:.0f}pw" if r.price_pw else "N/A" for r in records],
@@ -180,7 +184,7 @@ def query_properties(args: argparse.Namespace) -> None:
         "baths": [r.bathrooms for r in records],
         "sqft": [r.size_sqft for r in records],
         "floor": [r.floor_level for r in records],
-        "type": [r.property_type for r in records],
+        "prop_type": [r.property_type for r in records],
         "furnished": [r.furnished for r in records],
         "postcode": [f"{r.postcode_outcode} {r.postcode_incode}" if r.postcode_outcode else None for r in records],
         "lat": [r.latitude for r in records],
@@ -236,6 +240,7 @@ def search_scrape(args: argparse.Namespace) -> None:
     criteria = SearchCriteria(
         location=args.location,
         radius_miles=args.radius,
+        listing_type=args.listing_type,
         min_bedrooms=args.min_bedrooms,
         max_bedrooms=args.max_bedrooms,
         property_types=args.property_type,
@@ -295,6 +300,7 @@ def main():
     watchlist_add.add_argument("--source", default="rightmove", help="Source (rightmove)")
     watchlist_add.add_argument("--location", required=True, help="Location (e.g., SE16)")
     watchlist_add.add_argument("--radius", type=float, default=0.5, help="Search radius in miles")
+    watchlist_add.add_argument("--listing-type", choices=["rent", "buy"], default="rent", help="Listing type")
     watchlist_add.add_argument("--min-bedrooms", type=int, dest="min_bedrooms")
     watchlist_add.add_argument("--max-bedrooms", type=int, dest="max_bedrooms")
     watchlist_add.add_argument("--property-type", nargs="+", choices=["flat", "house", "studio"])
@@ -309,6 +315,7 @@ def main():
     watchlist_delete.add_argument("id", type=int, help="Watchlist entry ID")
 
     query_parser = subparsers.add_parser("query", help="Query properties")
+    query_parser.add_argument("--listing-type", choices=["rent", "buy"])
     query_parser.add_argument("--source")
     query_parser.add_argument("--bedrooms", type=int)
     query_parser.add_argument("--postcode")
@@ -323,6 +330,7 @@ def main():
     search_parser = subparsers.add_parser("search", help="Search and scrape properties")
     search_parser.add_argument("--location", required=True, help="Location (e.g., SE16)")
     search_parser.add_argument("--radius", type=float, default=0.5, help="Search radius in miles")
+    search_parser.add_argument("--listing-type", choices=["rent", "buy"], default="rent", help="Listing type")
     search_parser.add_argument("--min-bedrooms", type=int, dest="min_bedrooms")
     search_parser.add_argument("--max-bedrooms", type=int, dest="max_bedrooms")
     search_parser.add_argument("--property-type", nargs="+", choices=["flat", "house", "studio"])
