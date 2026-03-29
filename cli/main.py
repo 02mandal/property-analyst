@@ -227,6 +227,58 @@ def scrape_url(args: argparse.Namespace) -> None:
     db.close()
 
 
+def search_scrape(args: argparse.Namespace) -> None:
+    """Search and scrape properties based on criteria."""
+    db = PropertyDatabase(args.db)
+    db.init_schema()
+
+    scraper = RightmoveScraper()
+    criteria = SearchCriteria(
+        location=args.location,
+        radius_miles=args.radius,
+        min_bedrooms=args.min_bedrooms,
+        max_bedrooms=args.max_bedrooms,
+        property_types=args.property_type,
+        furnished=args.furnished,
+        min_price_pcm=args.min_price,
+        max_price_pcm=args.max_price,
+    )
+
+    print(f"Searching properties in {args.location}...")
+
+    try:
+        listing_urls = scraper.stream_from_api(
+            criteria,
+            progress=lambda i, t: print(f"\rFinding properties... page {i}", end="", flush=True),
+        )
+        listing_urls_list = list(listing_urls)
+    except Exception as e:
+        logger.error(f"Search failed: {e}")
+        db.close()
+        return
+
+    print(f"\nFound {len(listing_urls_list)} properties, scraping details...")
+
+    results = list(scraper.scrape_many(
+        listing_urls_list,
+        progress=lambda i, t: print(f"\rScraping {i}/{t}...", end="", flush=True),
+    ))
+    print()
+
+    new_count = 0
+    for result in results:
+        if result.record:
+            if db.insert(result.record):
+                new_count += 1
+                print(f"  + {result.record.display_address}")
+            else:
+                print(f"    {result.record.display_address} (updated)")
+
+    print(f"\nDone: {len(results)} scraped, {new_count} new")
+
+    db.close()
+
+
 def main():
     parser = argparse.ArgumentParser(description="Property scraper CLI")
     parser.add_argument("--db", default="data/properties.db", help="Database path")
@@ -268,6 +320,16 @@ def main():
     scrape_parser = subparsers.add_parser("scrape", help="Scrape a single URL")
     scrape_parser.add_argument("url", help="Property URL to scrape")
 
+    search_parser = subparsers.add_parser("search", help="Search and scrape properties")
+    search_parser.add_argument("--location", required=True, help="Location (e.g., SE16)")
+    search_parser.add_argument("--radius", type=float, default=0.5, help="Search radius in miles")
+    search_parser.add_argument("--min-bedrooms", type=int, dest="min_bedrooms")
+    search_parser.add_argument("--max-bedrooms", type=int, dest="max_bedrooms")
+    search_parser.add_argument("--property-type", nargs="+", choices=["flat", "house", "studio"])
+    search_parser.add_argument("--furnished", choices=["furnished", "unfurnished", "either"], default="either")
+    search_parser.add_argument("--min-price", type=int, help="Min price in pence PCM")
+    search_parser.add_argument("--max-price", type=int, help="Max price in pence PCM")
+
     args = parser.parse_args()
 
     if args.command == "init":
@@ -284,6 +346,8 @@ def main():
         query_properties(args)
     elif args.command == "scrape":
         scrape_url(args)
+    elif args.command == "search":
+        search_scrape(args)
     else:
         parser.print_help()
 

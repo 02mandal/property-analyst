@@ -6,6 +6,7 @@ import re
 from datetime import datetime
 from typing import Any
 
+import requests
 from bs4 import BeautifulSoup
 
 from models.property import PropertyRecord, generate_property_hash
@@ -14,12 +15,55 @@ from scrapers.base import AbstractScraper
 
 logger = logging.getLogger(__name__)
 
+API_BASE_URL = "https://api.rightmove.com"
+
+
+class RightmoveAPI:
+    """Client for Rightmove's internal search API."""
+
+    @staticmethod
+    def build_search_params(criteria: SearchCriteria, page: int = 0) -> dict[str, Any]:
+        """Build API search parameters from criteria."""
+        params = {
+            "locationIdentifier": f"REGION^{criteria.location.replace(' ', '%20')}",
+            "numberOfPropertiesRequested": 100,
+            "page": page,
+        }
+
+        if criteria.min_bedrooms is not None:
+            params["minBedrooms"] = criteria.min_bedrooms
+        if criteria.max_bedrooms is not None:
+            params["maxBedrooms"] = criteria.max_bedrooms
+
+        if criteria.min_price_pcm is not None:
+            params["minPrice"] = criteria.min_price_pcm // 4
+        if criteria.max_price_pcm is not None:
+            params["maxPrice"] = criteria.max_price_pcm // 4
+
+        if criteria.property_types:
+            type_map = {"flat": "flats", "house": "houses", "studio": "studios"}
+            params["propertyType"] = ",".join(type_map.get(t, t) for t in criteria.property_types)
+
+        if criteria.furnished == "furnished":
+            params["furnishTypes"] = "furnished"
+        elif criteria.furnished == "unfurnished":
+            params["furnishTypes"] = "unfurnished"
+
+        return params
+
+    @staticmethod
+    def extract_listing_ids(api_response: dict[str, Any]) -> list[str]:
+        """Extract property IDs from API response."""
+        listings = api_response.get("properties", [])
+        return [str(p["id"]) for p in listings if p.get("id")]
+
 
 class RightmoveScraper(AbstractScraper):
     """Scraper for Rightmove property listings."""
 
     name = "rightmove"
     base_url = "https://www.rightmove.co.uk"
+    api_base_url = API_BASE_URL
 
     def search_urls(self, criteria: SearchCriteria) -> list[str]:
         """Generate Rightmove search URLs from criteria."""
@@ -91,6 +135,50 @@ class RightmoveScraper(AbstractScraper):
                 urls.append(f"{self.base_url}/properties/{url_id}")
 
         return list(dict.fromkeys(urls))
+
+    def search_api_url(self, criteria: SearchCriteria, page: int = 0) -> str:
+        """Build Rightmove internal API URL for rental search."""
+        params = RightmoveAPI.build_search_params(criteria, page)
+        query = "&".join(f"{k}={v}" for k, v in params.items())
+        return f"{self.api_base_url}/property-rental-api/search?{query}"
+
+    def listings_from_api(self, criteria: SearchCriteria, page: int = 0) -> list[str]:
+        """Fetch listings from Rightmove JSON API."""
+        api_url = self.search_api_url(criteria, page)
+        domain = api_url.split("/")[2]
+        self.rate_limiter.wait(domain)
+
+        try:
+            response = self.session.get(api_url, timeout=30)
+            response.raise_for_status()
+            data = response.json()
+            ids = RightmoveAPI.extract_listing_ids(data)
+            return [f"{self.base_url}/properties/{id}" for id in ids]
+        except requests.exceptions.RequestException as e:
+            logger.error(f"API request failed: {e}")
+            return []
+
+    def stream_from_api(
+        self,
+        criteria: SearchCriteria,
+        progress: Any = None,
+    ) -> list[str]:
+        """Fetch all listing URLs from API with pagination."""
+        all_ids: list[str] = []
+        page = 0
+        max_pages = 100
+
+        while page < max_pages:
+            if progress:
+                progress(page + 1, max_pages)
+
+            ids = self.listings_from_api(criteria, page)
+            if not ids:
+                break
+            all_ids.extend(ids)
+            page += 1
+
+        return list(dict.fromkeys(all_ids))
 
     def parse_listing(self, url: str, html: str) -> PropertyRecord:
         """Parse a Rightmove listing page HTML into a PropertyRecord."""
