@@ -72,6 +72,18 @@ poetry run python -m cli.main query --source rightmove --bedrooms 2 --max-price 
 poetry run python -m cli.main run
 ```
 
+### Search and scrape properties
+
+```bash
+poetry run python -m cli.main search \
+  --location "SE16" \
+  --max-bedrooms 2 \
+  --max-price 3000 \
+  --furnished furnished
+```
+
+This uses Rightmove's API to discover properties matching your criteria and scrapes full details into the database.
+
 ## Architecture
 
 ```
@@ -108,12 +120,6 @@ Run via cron for periodic updates:
 0 */4 * * * cd /path/to/property-analyst && poetry run python -m cli.main run
 ```
 
-## Limitations
-
-Rightmove search pages are JavaScript-rendered (SPA). The `run` command requires manually adding property URLs to watchlists or using Selenium for search discovery (future enhancement).
-
-For now, use `scrape <url>` to add individual listings.
-
 ## Extending
 
 Add a new source by subclassing `AbstractScraper`:
@@ -136,6 +142,14 @@ class MyScraper(AbstractScraper):
     def parse_listing(self, url, html):
         # Parse HTML into PropertyRecord
         return PropertyRecord(...)
+    
+    def search_api_url(self, criteria, page=0):
+        # For API-based search (optional)
+        return f"https://api.example.com/search?..."
+    
+    def listings_from_api(self, criteria, page=0):
+        # Fetch listings from API (optional)
+        return [...]
 ```
 
 Register in `ScraperRegistry`:

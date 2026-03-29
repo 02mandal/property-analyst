@@ -117,6 +117,10 @@ class AbstractScraper(ABC):
         """Extract listing URLs from a search results page."""
         pass
 
+    def listings_from_api(self, criteria: Any, page: int = 0) -> list[str]:
+        """Fetch listing URLs from API (optional - override in subclasses)."""
+        return []
+
     def scrape(self, url: str) -> ScrapeResult:
         """Scrape a single listing URL."""
         domain = url.split("/")[2]
@@ -204,7 +208,7 @@ class AbstractScraper(ABC):
 
         yield from self.scrape_many(unique_urls, progress)
 
-    def stream_from_api(
+    def _collect_api_urls(
         self,
         criteria: Any,
         progress: Callable[[int, int], None] | None = None,
@@ -212,18 +216,16 @@ class AbstractScraper(ABC):
         """Scrape listings using API-based discovery."""
         listing_urls: list[str] = []
 
-        if hasattr(self, "stream_from_api") and callable(getattr(self, "stream_from_api", None)):
-            listing_urls = self.stream_from_api(criteria, progress=progress)
-        else:
-            listing_urls = self.search_urls(criteria)
-            if hasattr(self, "listings_from_api"):
-                page = 0
-                while True:
-                    page_urls = self.listings_from_api(criteria, page)
-                    if not page_urls:
-                        break
-                    listing_urls.extend(page_urls)
-                    page += 1
+        if hasattr(self, "listings_from_api"):
+            page = 0
+            while True:
+                page_urls = self.listings_from_api(criteria, page)
+                if not page_urls:
+                    break
+                listing_urls.extend(page_urls)
+                page += 1
+                if progress:
+                    progress(page, 0)
 
         unique_urls = list(dict.fromkeys(listing_urls))
 
